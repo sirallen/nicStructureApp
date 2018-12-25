@@ -1,0 +1,18 @@
+Package: nicStructureApp
+Type: Package
+Title: What the package does (short line)
+Version: 1.0
+Date: 2018-12-24
+Author: Allen Sirolly <allen.sirolly@gmail.com>
+Maintainer: Allen Sirolly <allen.sirolly@gmail.com>
+Description: More about what it does (maybe more than one line)
+Depends: R (>= 3.1.0)
+Imports:
+  data.table,
+  ggplot2,
+  gplots,
+  shinyjs
+Suggests:
+  testthat
+License: What license is it under?
+RoxygenNote: 6.1.1
