@@ -116,8 +116,8 @@ some detail.
 -   What are the (regulatory) incentives for structuring these
     institutions a certain way?
 
--   How has the structure of these institutions changed over time?
-    (More complex?)
+-   How has the structure of these institutions changed over time? (More
+    complex?)
 
 -   What activities do non-banks engage in? (If this info is not
     available directly, as noted above, then maybe can discern from the
@@ -142,5 +142,10 @@ Cetorelli, N. and S. Stern. "Same Name, New Businesses: Evolution in the
 Bank Holding Company." FRBNY Liberty Street Economics blog, 28 September
 2015.
 (<a href='http://libertystreeteconomics.newyorkfed.org/2015/09/same-name-new-businesses-evolution-in-the-bank-holding-company.html' target='_blank'>link</a>)
+
+Flood, M., D. Kenett, R. Lumsdaine and J. Simon. "The Complexity of Bank
+Holding Companies: A Topological Approach." NBER Working Paper 23755,
+August 2017.
+(<a href=https://www.nber.org/papers/w23755 target='_blank'>link</a>)
 
 <hr>
