@@ -130,22 +130,33 @@ ui <- navbarPage(
             Not all holding companies have enough data with which to 
             generate plots, so for some selections the plot areas may 
             appear blank.',
+            hr(),
             
-            plotOutput('entityRegionAreaPlot', width = '80%', height = '600px'),
+            h4('Entity count by geographic region'),
+            plotOutput('entityRegionAreaPlot', width = '100%', height = '400px'),
             
-            'Connected scatterplot to track growth along two dimensions:',
+            h4('Assets vs. entity count'),
+            plotOutput('entityAssetConnectedPlot', width = '100%', height = '400px'),
             
-            plotOutput('entityAssetConnectedPlot', width = '80%', height = '600px'),
-            plotOutput('linkDistanceDistributionPlot', width = '80%', height = '600px'),
-            plotOutput('top10StatesCountriesPlot', width = '80%', height = '600px'),
+            h4('Distribution of entities by edge distance from top-tier HC'),
+            plotOutput('linkDistanceDistributionPlot', width = '100%', height = '400px'),
+            
+            h4('Most-represented states and countries (physical entity location)'),
+            plotOutput('top10StatesCountriesPlot', width = '100%', height = '400px'),
+            br(),
             
             'Plots below use the ratio of links (connections) to nodes minus one
             (subsidiaries) as a measure of complexity. If each subsidiary has
             exactly one direct parent, the structure is minimally complex with a
             link-node ratio equal to one:',
             
-            plotOutput('linkNodeRatioTsPlot', width = '80%', height = '600px'),
-            plotOutput('entityLinkNodeRatioConnectedPlot', width = '80%', height = '600px')),
+            h4('Link-node ratio'),
+            plotOutput('linkNodeRatioTsPlot', width = '100%', height = '400px'),
+            
+            h4('Link-node ratio vs. entity count'),
+            plotOutput('entityLinkNodeRatioConnectedPlot', width = '100%', height = '400px'),
+            br()
+          ),
           
           tabPanel(
             title = 'History',
@@ -245,7 +256,7 @@ server <- function(input, output, session) {
   
   observeEvent(data(), {
     
-    bhcMaxTier <<- data()[[1]][, max(Tier)]
+    bhcMaxTier <<- data()$links[, max(Tier)]
     
   }, priority = 1)
 
@@ -258,13 +269,13 @@ server <- function(input, output, session) {
   json_data <- reactive({
     if (!is.null(data())) {
       # Important!! Need to use copy(); otherwise will also modify
-      # Tier in data()[[3]] -- see http://stackoverflow.com/questions/10225098
-      nodes <- copy(data()[[3]])
+      # Tier in data()$df -- see http://stackoverflow.com/questions/10225098
+      nodes <- copy(data()$df)
       nodes[, Tier:= min(Tier), by = 'label']
       nodes <- unique(nodes[, .(Tier, lat, lng, label)])
       nodes <- unname(split(nodes, 1:nrow(nodes)))
 
-      links <- data()[[1]]
+      links <- data()$links
       links <- unique(links[, .(Tier, from.lat, from.lng, to.lat, to.lng)])
       links <- unname(split(links, 1:nrow(links)))
 
@@ -276,15 +287,15 @@ server <- function(input, output, session) {
   compare_data <- reactive({
     if (input$highlight != '') {
       # only need nodes (for now)
-      load_data(input$bhc, input$highlight)[[2]]
+      load_data(input$bhc, input$highlight)$nodes
       
     } else NA
   })
 
   output$network <- renderForceNetwork({
     if (!is.null(data())) {
-      links <- copy(data()[[1]])
-      nodes <- copy(data()[[2]])
+      links <- copy(data()$links)
+      nodes <- copy(data()$nodes)
       nodes[, Nodesize:= .1]
       
       if (input$domOnly) {
@@ -356,14 +367,14 @@ server <- function(input, output, session) {
   output$linkDistanceDistributionPlot <- renderPlot({
     # Distribution of entities by link distance from HC
     if (!is.null(data())) {
-      plotLinkDistanceDistribution(data()[[3]][-1], input$bhc)
+      plotLinkDistanceDistribution(data()$df[-1], input$bhc)
     }
   })
   
   output$top10StatesCountriesPlot <- renderPlot({
     # Most common states / countries
     if (!is.null(data())) {
-      plotTop10StatesCountries(data()[[3]], input$bhc)
+      plotTop10StatesCountries(data()$df, input$bhc)
     }
   })
   
@@ -391,7 +402,7 @@ server <- function(input, output, session) {
   # Make sure to use renderDataTable() from /DT/, not /shiny/
   output$bhcTable <- DT::renderDataTable({
     DT::datatable(
-      data()[[1]][, .(Entity = to, Parent = from, Location = to.Loc, Type)]
+      data()$links[, .(Entity = to, Parent = from, Location = to.Loc, Type)]
     )
   })
   

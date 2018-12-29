@@ -70,7 +70,7 @@ plotEntityCountByRegion <- function(rssd) {
   
   for (g in dat[, unique(group)]) {
     p <- p + geom_area(data = dat[group == g], aes(fill = Region),
-                       col = 'lightgray', pos = 'stack', size = .2, alpha = .9) +
+                       col = 'lightgray', pos = 'stack', size = .2, alpha = .8) +
       geom_line(data = dat.ofc[group == g],
                 aes(x = asOfDate, y = N, color = factor('OFC', labels = str_wrap(
                   'Offshore Financial Centers (IMF Classification)', 30))),

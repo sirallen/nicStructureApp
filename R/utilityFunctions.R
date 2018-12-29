@@ -45,7 +45,7 @@ load_data <- function(bhc, asOfDate) {
   #         to.lng, to.Group, value, from.id, to.id>
   # nodes: <id, Id_Rssd, name, Group>
   # df:    <Note, Name, Id_Rssd, Parent, Type, Tier, label, lat, lng, Group>
-  list(links, nodes, df)
+  list(links = links, nodes = nodes, df = df)
 }
 
 updateIds <- function(nodes, links) {

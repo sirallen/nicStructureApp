@@ -2,16 +2,19 @@
 title: 'Background'
 output: md_document
 ---
-```{r, echo=FALSE}
+```{r, echo = FALSE, message = FALSE}
 library(data.table)
 library(ggplot2)
-source('_plotFunctions.R')
+
+devtools::load_all('..')
+
 theme_set(
   theme_bw() +
-    theme(panel.border=element_rect(color=NA))
+    theme(panel.border = element_rect(color = NA))
 )
 knitr::opts_chunk$set(
-  fig.path = 'figure/'
+  echo = FALSE, warning = FALSE, message = FALSE,
+  fig.path = 'figure/', fig.align = 'center'
 )
 ```
 
@@ -27,81 +30,72 @@ A _bank holding company_ (BHC) is simply a firm that controls one or more banks.
 
 The figure below shows the size (measured by total assets) of the 20 largest HCs as of the end of 2016, along with their share of assets among the ~600 HCs with at least $1 billion in assets:
 
-```{r, echo=FALSE, fig.align='center', fig.width=8*8/7, fig.height=8, out.width='800px', out.height='700px', dpi=150}
-hc10bn = fread('data/HC10bn.csv')
+```{r, fig.width = 8 * 8 / 7, fig.height = 8, out.width = '800px', out.height = '700px', dpi = 150}
+hc10bn <- fread('../data/HC10bn.csv')
 setnames(hc10bn, 'Institution Name (RSSD ID)', 'name')
 setnames(hc10bn, '12/31/2016 Total Assets', 'asset')
 # Note: Assets in thousands of dollars
-hc10bn[, asset:= as.numeric(gsub('[^0-9]','',asset))/1e6]
+hc10bn[, asset:= as.numeric(gsub('[^0-9]', '', asset)) / 1e6]
 hc10bn[, name:= gsub(' \\(\\d+\\)', '', name)]
 hc10bn[, name:= gsub('ASSOCIATION', 'ASSOC.', name)]
 hc10bn[, name:= factor(name, name)]
-# Total FR Y-9C assets is $19.443 tr; ok to hard-code :P
-# da[BHCK2170 >= 1e6, sum(BHCK2170/1e9)]
-hc10bn[, cumAsset:= cumsum(asset)/19443]
+hc10bn[, cumAsset:= cumsum(asset) / TOTAL_FRY9C_ASSETS_BN_123116]
 
-p = ggplot(hc10bn[1:20], aes(y=asset, x=name)) +
-  geom_bar(stat='identity', fill='royalblue') +
-  labs(x='', y='12/31/2016 Total Assets (billions)') +
+p <- ggplot(hc10bn[1:20], aes(y = asset, x = name)) +
+  geom_bar(stat = 'identity', fill = 'royalblue') +
+  labs(x = '', y = '12/31/2016 Total Assets (billions)') +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        plot.margin = unit(c(.6,1.4,0,1.4), 'cm'))
+        plot.margin = unit(c(.6, 1.4, 0, 1.4), 'cm'))
 
-p + geom_line(aes(x=1:20, y=cumAsset*get_ymax(p)), lty=2, lwd=1.3, col='red') +
-  scale_y_continuous(sec.axis = sec_axis(
-    ~./get_ymax(p), 'Cum. Share of Assets',
-    breaks = seq(0,1,.25)))
+p + geom_line(aes(x = 1:20, y = cumAsset * get_ymax(p)), lty = 2, lwd = 1.3, col = 'red') +
+  scale_y_continuous(sec.axis = sec_axis(~ . / get_ymax(p), 'Cum. Share of Assets',
+                                         breaks = seq(0, 1, .25)))
 
 ```
 
 There are a large number of medium- and small-sized holding companies that control less than $1 billion in assets. The figure below shows the total number of registered holding companies by type, with annotations of significant legislation. (More about this...). The data comes from scraping <a href='https://www.ffiec.gov/nicpubweb/nicweb/InstitutionHistory.aspx?parID_RSSD=1021628&parDT_END=99991231' target='_blank'>Institution Histories</a> on the NIC website, which can be used to identify when a firm was organized as a holding company. (A master list of firms, domestic and foreign, that were ever holding companies is available <a href='https://www.chicagofed.org/banking/financial-institution-reports/bhc-name-list' target='_blank'>here</a>.)
 
-```{r, echo=FALSE, fig.align='center', fig.width=8*8/6, fig.height=8, out.width='800px', out.height='600px', dpi=150}
-HCcounts = fread('data/HCcounts.csv')
+```{r, fig.width = 8 * 8 / 6, fig.height = 8, out.width = '800px', out.height = '600px', dpi = 150}
+HCcounts <- fread('../data/HCcounts.csv')
 HCcounts[, yearqtr:= as.Date(yearqtr)]
-HCcounts[, Type:= factor(
-  Type, levels=c('BHC','FHC - Domestic','FHC - Foreign','SLHC','IHC','FBO as BHC'))]
+HCcounts[, Type:= factor(Type, levels = names(BHC_CATEGORIES))]
 
-ggplot(HCcounts, aes(x=yearqtr, y=V1)) +
-  geom_area(aes(fill=Type), color='lightgray', position='stack',
-            size=.2, alpha=.9) +
-  scale_x_date(breaks=seq.Date(as.Date('1960-01-01'), as.Date('2017-01-01'),
-                               by='10 years'),
-               labels=seq(1960, 2010, 10)) +
-  geom_vline(xintercept=as.numeric(as.Date('1970-12-31')), lty=2) +
-  annotate('text', x=as.Date('1970-12-31')+240, y=6000,
-           label='Dec 1970:\nAmendments to BHCA',
-           family='mono', size=3, hjust=0, vjust=1) +
-  geom_vline(xintercept=as.numeric(as.Date('1999-11-12')), lty=2) +
-  annotate('text', x=as.Date('1999-11-12')+240, y=6000,
-           label='Nov 1999:\nGramm-Leach-Bliley Act',
-           family='mono', size=3, hjust=0, vjust=1) +
-  labs(x='', y='Number of holding companies')
-
+ggplot(HCcounts, aes(x = yearqtr, y = V1)) +
+  geom_area(aes(fill = Type), color = 'lightgray', position = 'stack',
+            size = .2, alpha = .9) +
+  scale_x_date(breaks = seq.Date(RMD_PLOT_START_DATE, RMD_PLOT_END_DATE, by = '10 years'),
+               labels = seq(1960, 2010, 10)) +
+  geom_vline(xintercept = as.numeric(BHC_AMEND_DATE), lty = 2) +
+  annotate('text', x = BHC_AMEND_DATE + 240, y = 6000,
+           label = 'Dec 1970:\nAmendments to BHCA',
+           family = 'mono', size = 3, hjust = 0, vjust = 1) +
+  geom_vline(xintercept = as.numeric(GLB_ACT_DATE), lty = 2) +
+  annotate('text', x = GLB_ACT_DATE + 240, y = 6000,
+           label = 'Nov 1999:\nGramm-Leach-Bliley Act',
+           family = 'mono', size = 3, hjust = 0, vjust = 1) +
+  labs(x = '', y = 'Number of holding companies')
 ```
 
 The plot below decomposes the quarterly churn into different event types described in the Institution Histories: establishments, acquisitions, closures, and changes in organization type. I've removed the large "jump" following the passage of the 1970 BHCA amendments, when over 900 companies registered as BHCs:
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', fig.width=8*8/6, fig.height=8, out.width='800px', out.height='600px', dpi=150}
-HCevents = fread('data/HCevents.csv')
+```{r, fig.width = 8 * 8 / 6, fig.height = 8, out.width = '800px', out.height = '600px', dpi = 150}
+HCevents <- fread('../data/HCevents.csv')
 HCevents[, yearqtr:= as.Date(yearqtr)]
-HCevents[, `Event Type`:= factor(`Event Type`, levels=c(
-  'Established','Changed_to_hc','Acquired','Closed','Changed_from_hc'))]
+HCevents[, `Event Type`:= factor(`Event Type`, levels = BHC_EVENT_LEVELS)]
 
-ggplot(HCevents, aes(x=yearqtr, y=value)) +
-  stat_smooth(geom='area', aes(fill=`Event Type`), position='stack',
-              color='lightgray', span=.06, size=.2, alpha=.9) +
-  scale_fill_manual(values=c('#a1d99b','#31a354','#fcbba1','#fb6a4a','#a50f15')) +
+ggplot(HCevents, aes(x = yearqtr, y = value)) +
+  stat_smooth(geom = 'area', aes(fill = `Event Type`), position = 'stack',
+              color = 'lightgray', span = .06, size = .2, alpha = .9) +
+  scale_fill_manual(values = CHURN_PLOT_COLORS) +
   # Total (net) churn
-  geom_smooth(data = HCevents[, .(value=sum(value)), by='yearqtr'],
-              aes(x=yearqtr, y=value, color='Total churn'), lty=2, span=.06,
-              lwd=.5, se=F) +
-  scale_color_manual('', values='black') +
-  scale_x_date(breaks=seq.Date(as.Date('1960-01-01'), as.Date('2017-01-01'),
-                               by='10 years'),
-               labels=seq(1960, 2010, 10)) +
-  scale_y_continuous(limits=c(NA, 250)) +
-  labs(x='', y='Number of events')
-
+  geom_smooth(data = HCevents[, .(value = sum(value)), by = 'yearqtr'],
+              aes(x = yearqtr, y = value, color = 'Total churn'), lty = 2, span = .06,
+              lwd = .5, se = FALSE) +
+  scale_color_manual('', values = 'black') +
+  scale_x_date(breaks = seq.Date(RMD_PLOT_START_DATE, RMD_PLOT_END_DATE, by = '10 years'),
+               labels = seq(1960, 2010, 10)) +
+  scale_y_continuous(limits = c(NA, 250)) +
+  labs(x = '', y = 'Number of events')
 ```
 
 Now on to the structure data, which is the primary focus of this application;
@@ -152,6 +146,8 @@ Avraham, D., P. Selvaggi and J. Vickery. "A Structural View of U.S. Bank Holding
 Cetorelli, N., J. McAndrews and J. Traina. "Evolution in Bank Complexity." FRBNY Economic Policy Review, December 2014. (<a href='https://www.newyorkfed.org/medialibrary/media/research/epr/2014/1412cet2.pdf' target='_blank'>link</a>)
 
 Cetorelli, N. and S. Stern. "Same Name, New Businesses: Evolution in the Bank Holding Company." FRBNY Liberty Street Economics blog, 28 September 2015. (<a href='http://libertystreeteconomics.newyorkfed.org/2015/09/same-name-new-businesses-evolution-in-the-bank-holding-company.html' target='_blank'>link</a>)
+
+Flood, M., D. Kenett, R. Lumsdaine and J. Simon. "The Complexity of Bank Holding Companies: A Topological Approach." NBER Working Paper 23755, August 2017. (<a href=https://www.nber.org/papers/w23755 target='_blank'>link</a>)
 
 <hr>
 
