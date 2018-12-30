@@ -2,14 +2,10 @@
 #' @import stringr
 
 cc <- fread('data/entityTypeGrouping.csv')
-entity.region <- fread('data/EntitiesByRegion.csv')
-entity.ofc <- fread('data/EntitiesByOFC.csv')
-link.node.ratio <- fread('data/linkNodeRatio.csv')
+graphSummary <- fread('data/GraphSummary.csv')
 assets <- fread('data/Assets.csv')
 
-entity.region[, asOfDate:= as.Date(asOfDate)]
-entity.ofc[, asOfDate:= as.Date(asOfDate)]
-link.node.ratio[, asOfDate:= as.Date(asOfDate)]
+graphSummary[, asOfDate:= as.Date(asOfDate)]
 assets[, yearqtr:= as.Date(yearqtr)]
 # measure in billions
 assets[, BHCK2170:= BHCK2170 / 1e6]

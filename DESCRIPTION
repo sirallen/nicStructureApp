@@ -22,7 +22,8 @@ Imports:
   shiny,
   shinyBS,
   shinyjs,
-  stringr
+  stringr,
+  tidyr
 Suggests:
   testthat
 License: What license is it under?

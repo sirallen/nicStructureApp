@@ -358,7 +358,7 @@ server <- function(input, output, session) {
     } })
   
   output$entityRegionAreaPlot <- renderPlot({
-    if (entity.region[Id_Rssd == input$bhc, uniqueN(asOfDate) > 2]) {
+    if (setDT(graphSummary)[Id_Rssd == input$bhc, uniqueN(asOfDate) > 2]) {
       plotEntityCountByRegion(input$bhc)
     }
   })
@@ -376,7 +376,7 @@ server <- function(input, output, session) {
   })
   
   output$linkNodeRatioTsPlot <- renderPlot({
-    if (link.node.ratio[Id_Rssd == input$bhc, .N > 2]) {
+    if (setDT(graphSummary)[Id_Rssd == input$bhc, .N > 2]) {
       plotLinkNodeRatioTs(input$bhc)
     }
   })
@@ -388,7 +388,7 @@ server <- function(input, output, session) {
   })
   
   output$entityLinkNodeRatioConnectedPlot <- renderPlot({
-    if (link.node.ratio[Id_Rssd == input$bhc, .N] > 2) {
+    if (setDT(graphSummary)[Id_Rssd == input$bhc, .N > 2]) {
       plotEntityLinkNodeRatioConnectedScatter(input$bhc)
     }
   })
