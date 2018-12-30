@@ -2,6 +2,7 @@
 #' @import dplyr
 #' @import ggplot2
 #' @importFrom gridExtra grid.arrange
+#' @importFrom tidyr complete gather
 
 get_ymax <- function(ggplot_object) {
   # return y-value of highest minor gridline
@@ -43,8 +44,10 @@ plotCoverage <- function(spans, start_date = as.Date('2000-03-31')) {
 }
 
 plotEntityCountByRegion <- function(rssd) {
-  dat <- entity.region %>%
+  dat <- graphSummary %>%
     filter(Id_Rssd == rssd) %>%
+    select_at(c('Id_Rssd', 'asOfDate', REGION_LEVELS)) %>%
+    gather(Region, N, -c('Id_Rssd', 'asOfDate')) %>%
     mutate(Region = factor(Region, levels = rev(REGION_LEVELS))) %>%
     complete(Id_Rssd, asOfDate, Region) %>%
     mutate(Region = factor(Region, levels = rev(REGION_LEVELS)),
@@ -52,8 +55,9 @@ plotEntityCountByRegion <- function(rssd) {
            # identify discontinuous geom_areas
            group = cumsum(c(TRUE, diff(asOfDate) > 92)))
   
-  dat.ofc <- entity.ofc %>%
+  dat.ofc <- graphSummary %>%
     filter(Id_Rssd == rssd) %>%
+    select(Id_Rssd, asOfDate, N = numOFC) %>%
     mutate(group = cumsum(c(TRUE, diff(asOfDate) > 92)))
   
   ggplot(dat, aes(x = asOfDate, y = N)) +
@@ -116,11 +120,14 @@ plotTop10StatesCountries <- function(dat, rssd) {
 }
 
 plotLinkNodeRatioTs <- function(rssd) {
-  dat <- link.node.ratio[Id_Rssd == rssd]
-  dat[, discontinuity:= c(FALSE, diff(asOfDate) > 92)]
-  dat[, group:= cumsum(discontinuity)]
+  dat <- graphSummary %>%
+    filter(Id_Rssd == rssd) %>%
+    transmute(Id_Rssd, asOfDate, linkNodeRatio = numLinks / (numNodes - 1)) %>%
+    mutate(discontinuity = c(FALSE, diff(asOfDate) > 92),
+           group = cumsum(discontinuity)) %>%
+    setDT()
   
-  p <- ggplot(dat, aes(x = asOfDate, y = link.node.ratio)) +
+  p <- ggplot(dat, aes(x = asOfDate, y = linkNodeRatio)) +
     geom_line(aes(group = group)) +
     scale_x_date(date_breaks = '2 years', labels = year) +
     scale_y_continuous(limits = c(1, NA)) +
@@ -135,7 +142,10 @@ plotLinkNodeRatioTs <- function(rssd) {
 }
 
 plotEntityAssetConnectedScatter <- function(rssd) {
-  dat <- entity.region[Id_Rssd == rssd, .(N = sum(N)), by = 'asOfDate']
+  dat <- graphSummary %>%
+    filter(Id_Rssd == rssd) %>%
+    select(asOfDate, N = numNodes) %>%
+    setDT()
   dat.asset <- assets[Id_Rssd == rssd]
   
   dat <- dat[dat.asset, on = .(asOfDate == yearqtr), nomatch = 0]
@@ -162,14 +172,14 @@ plotEntityAssetConnectedScatter <- function(rssd) {
 }
 
 plotEntityLinkNodeRatioConnectedScatter <- function(rssd) {
-  dat <- entity.region[Id_Rssd == rssd, .(N = sum(N)), by = 'asOfDate']
-  dat.ratio <- link.node.ratio[Id_Rssd == rssd]
+  dat <- graphSummary %>%
+    filter(Id_Rssd == rssd) %>%
+    transmute(asOfDate, N = numNodes, linkNodeRatio = numLinks / (numNodes - 1)) %>%
+    mutate(discontinuity = c(FALSE, diff(asOfDate) > 92),
+           group = cumsum(discontinuity)) %>%
+    setDT()
   
-  dat <- dat[dat.ratio, on = 'asOfDate']
-  dat[, discontinuity:= c(FALSE, diff(asOfDate) > 92)]
-  dat[, group:= cumsum(discontinuity)]
-  
-  p <- ggplot(dat, aes(x = link.node.ratio, y = N)) +
+  p <- ggplot(dat, aes(x = linkNodeRatio, y = N)) +
     geom_point() +
     geom_point(data = dat[month(asOfDate) == 12], col = 'red') +
     geom_path(aes(group = group)) +
@@ -184,7 +194,7 @@ plotEntityLinkNodeRatioConnectedScatter <- function(rssd) {
   
   p + geom_text(data = dat[month(asOfDate) == 12],
                 aes(label = year(asOfDate) + 1), size = 3, col = 'red',
-                nudge_x = -.02 * dat[, max(link.node.ratio) - 1])
+                nudge_x = -.02 * dat[, max(linkNodeRatio) - 1])
   
 }
 
