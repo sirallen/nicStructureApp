@@ -10,11 +10,13 @@ Depends: R (>= 3.1.0)
 Imports:
   data.table,
   devtools,
+  dplyr,
   DT,
   ggplot2,
   gplots,
   gridExtra,
   knitr,
+  igraph,
   networkD3,
   rjson,
   shiny,

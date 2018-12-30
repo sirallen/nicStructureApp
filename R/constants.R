@@ -22,6 +22,10 @@ BHC_CATEGORIES <- c(
   `FBO as BHC` = 'Foreign Banking Organization as a BHC'
 )
 
+REGION_LEVELS <- c('Northern America', 'Europe', 'East Asia',
+                   'Central and South America', 'Southeast Asia and Oceania',
+                   'South Asia', 'Middle East', 'Africa', 'Caribbean')
+
 RMD_PLOT_START_DATE <- as.Date('1960-01-01')
 RMD_PLOT_END_DATE <- as.Date('2017-01-01')
 GLB_ACT_DATE <- as.Date('1999-11-12')
@@ -29,3 +33,4 @@ BHC_AMEND_DATE <- as.Date('1970-12-31')
 BHC_EVENT_LEVELS <- c('Established', 'Changed_to_hc', 'Acquired', 'Closed', 'Changed_from_hc')
 CHURN_PLOT_COLORS <- c('#a1d99b','#31a354','#fcbba1','#fb6a4a','#a50f15')
 TOTAL_FRY9C_ASSETS_BN_123116 <- 19443
+TOTAL_FRY9C_ASSETS_BN_093018 <- 19729
