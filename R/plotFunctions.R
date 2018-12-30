@@ -1,4 +1,5 @@
 #' @import data.table
+#' @import dplyr
 #' @import ggplot2
 #' @importFrom gridExtra grid.arrange
 
@@ -6,18 +7,6 @@ get_ymax <- function(ggplot_object) {
   # return y-value of highest minor gridline
   # tail(ggplot_build(ggplot_object)$layout$panel_ranges[[1]]$y.minor_source, 1)
   tail(ggplot_build(ggplot_object)$layout$panel_scales_y[[1]]$range$range, 1)
-}
-
-zero_pad_plot1 <- function(dat) {
-  # Expand dat to include N = 0 for missing regions for each asOfDate
-  # (will fill in unwanted gaps in geom_area due to interpolation)
-  dat.0 <- CJ(Id_Rssd  = dat[, Id_Rssd[1]],
-             asOfDate = dat[, unique(asOfDate)],
-             Region   = dat[, unique(Region)])
-  
-  dat.0[dat, on = .(Id_Rssd, Region, asOfDate), N:= N]
-  dat.0[is.na(N), N:= 0]
-  dat.0
 }
 
 null_pad_plot3 <- function(dat) {
@@ -48,36 +37,33 @@ plotCoverage <- function(spans, start_date = as.Date('2000-03-31')) {
                      yend = pmax(end, start_date))) +
     geom_point(aes(x = Name, y = pmax(start, start_date)), color = 'red', size = 2) +
     geom_point(aes(x = Name, y = pmax(end, start_date)), color = 'red', size = 2) +
-    #scale_y_date(sec.axis = dup_axis()) + # can't do this
-    scale_y_date(position = 'top') +
+    scale_y_date(sec.axis = dup_axis()) +
     coord_flip() +
     labs(x = '', y = '')
 }
 
 plotEntityCountByRegion <- function(rssd) {
-  dat <- entity.region[Id_Rssd == rssd]
-  dat.ofc <- entity.ofc[Id_Rssd == rssd]
-  lev <- dat[, N[.N], by = 'Region'][order(V1), Region]
-  dat[, Region:= factor(Region, lev)]
-  dat <- zero_pad_plot1(dat)
+  dat <- entity.region %>%
+    filter(Id_Rssd == rssd) %>%
+    mutate(Region = factor(Region, levels = rev(REGION_LEVELS))) %>%
+    complete(Id_Rssd, asOfDate, Region) %>%
+    mutate(Region = factor(Region, levels = rev(REGION_LEVELS)),
+           N = coalesce(N, 0L),
+           # identify discontinuous geom_areas
+           group = cumsum(c(TRUE, diff(asOfDate) > 92)))
   
-  # Define "groups" to plot discontinuous geom_areas separately
-  # (i.e., breaks when a firm was not an HC)
-  dat[, group:= cumsum(c(TRUE, diff(asOfDate) > 92))]
-  dat.ofc[, group:= cumsum(c(TRUE, diff(asOfDate) > 92))]
+  dat.ofc <- entity.ofc %>%
+    filter(Id_Rssd == rssd) %>%
+    mutate(group = cumsum(c(TRUE, diff(asOfDate) > 92)))
   
-  p <- ggplot(dat, aes(x = asOfDate, y = N))
-  
-  for (g in dat[, unique(group)]) {
-    p <- p + geom_area(data = dat[group == g], aes(fill = Region),
-                       col = 'lightgray', pos = 'stack', size = .2, alpha = .8) +
-      geom_line(data = dat.ofc[group == g],
-                aes(x = asOfDate, y = N, color = factor('OFC', labels = str_wrap(
-                  'Offshore Financial Centers (IMF Classification)', 30))),
-                lwd = 1.3, lty = 2)
-  }
-  
-  p + scale_color_manual(values = 'black') +
+  ggplot(dat, aes(x = asOfDate, y = N)) +
+    geom_area(aes(fill = Region, group = interaction(group, Region)),
+              col = 'lightgray', pos = 'stack', size = .2, alpha = .8) +
+    geom_line(data = dat.ofc,
+              aes(group = group, color = factor('OFC', labels = str_wrap(
+                'Offshore Financial Centers (IMF Classification)', 30))),
+              lwd = 1.3, lty = 2) +
+    scale_color_manual(values = 'black') +
     scale_x_date(date_breaks = '2 years', labels = year) +
     labs(x = '', y = 'Number of entities', color = '') +
     guides(fill = guide_legend(order = 1),

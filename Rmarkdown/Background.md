@@ -26,8 +26,8 @@ for definitions of these types.
 
 <hr>
 The figure below shows the size (measured by total assets) of the 20
-largest HCs as of the end of 2016, along with their share of assets
-among the ~600 HCs with at least $1 billion in assets:
+largest HCs as of 2018 Q3, along with their share of assets among the
+~600 HCs with at least $1 billion in assets:
 
 <img src="figure/unnamed-chunk-2-1.png" width="800px" height="700px" style="display: block; margin: auto;" />
 

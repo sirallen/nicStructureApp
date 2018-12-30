@@ -15,6 +15,7 @@ Imports:
   gplots,
   gridExtra,
   knitr,
+  igraph,
   networkD3,
   rjson,
   shiny,

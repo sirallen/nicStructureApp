@@ -358,48 +358,41 @@ server <- function(input, output, session) {
     } })
   
   output$entityRegionAreaPlot <- renderPlot({
-    # Area plot -- number of entities by region
     if (entity.region[Id_Rssd == input$bhc, uniqueN(asOfDate) > 2]) {
       plotEntityCountByRegion(input$bhc)
     }
   })
   
   output$linkDistanceDistributionPlot <- renderPlot({
-    # Distribution of entities by link distance from HC
     if (!is.null(data())) {
       plotLinkDistanceDistribution(data()$df[-1], input$bhc)
     }
   })
   
   output$top10StatesCountriesPlot <- renderPlot({
-    # Most common states / countries
     if (!is.null(data())) {
       plotTop10StatesCountries(data()$df, input$bhc)
     }
   })
   
   output$linkNodeRatioTsPlot <- renderPlot({
-    # Simple time series: link-node ratio
     if (link.node.ratio[Id_Rssd == input$bhc, .N > 2]) {
       plotLinkNodeRatioTs(input$bhc)
     }
   })
   
   output$entityAssetConnectedPlot <- renderPlot({
-    # Connected scatterplot: (n_entities, assets)
     if (assets[Id_Rssd == input$bhc, .N > 2]) {
       plotEntityAssetConnectedScatter(input$bhc)
     }
   })
   
   output$entityLinkNodeRatioConnectedPlot <- renderPlot({
-    # Connected scatterplot: (n_entitites, link-node ratio)
     if (link.node.ratio[Id_Rssd == input$bhc, .N] > 2) {
       plotEntityLinkNodeRatioConnectedScatter(input$bhc)
     }
   })
   
-  # Make sure to use renderDataTable() from /DT/, not /shiny/
   output$bhcTable <- DT::renderDataTable({
     DT::datatable(
       data()$links[, .(Entity = to, Parent = from, Location = to.Loc, Type)]
@@ -414,9 +407,11 @@ server <- function(input, output, session) {
   })
   
   output$HC10bnTable <- DT::renderDataTable({
-    DT::datatable(
-      HC10bn, options = list(dom = 't', paging = FALSE, ordering = FALSE)
-    )
+    HC10bn %>%
+      mutate_at('9/30/2018 Total Assets (Thousands)', scales::dollar) %>%
+      DT::datatable(
+        options = list(dom = 't', paging = FALSE, ordering = FALSE)
+      )
   })
   
   output$coveragePlot <- renderPlot({
